@@ -1,14 +1,22 @@
 "use client";
-import Button from "@/src/app/components/Button";
-import Input from "@/src/app/components/Input";
-import Stepper from "@/src/app/components/Stepper";
-import { useRouter } from "next/navigation";
-import { useApplicationForm } from "@/src/lib/ApplicationFormContext";
+
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+
+import { RootState } from "@/src/app/store";
+import { setField } from "@/src/app/applicant/applicantSlice";
+
+import Stepper from "@/src/app/components/Stepper";
+import Input from "@/src/app/components/Input";
+import Button from "@/src/app/components/Button";
 
 export default function ThirdStep() {
+  const dispatch = useDispatch();
   const router = useRouter();
-  const { data, setData } = useApplicationForm();
+
+  const data = useSelector((state: RootState) => state.applicant);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,28 +25,33 @@ export default function ThirdStep() {
     setSubmitting(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append("resume", data.resume as File);
-    formData.append("school", data.schoolName);
-    formData.append("degree", data.degreeProgram);
-    formData.append("leetcode_handle", data.leetcode);
-    formData.append("codeforces_handle", data.codeforces);
-    formData.append("essay_why_a2sv", data.essay2);
-    formData.append("essay_about_you", data.essay1);
+    const submissionData = new FormData();
+    if (data.resume) {
+      submissionData.append("resume", data.resume);
+    }
+    submissionData.append("school", data.schoolName);
+    submissionData.append("degree", data.degreeProgram);
+    submissionData.append("leetcode_handle", data.leetcode);
+    submissionData.append("codeforces_handle", data.codeforces);
+    submissionData.append("essay_why_a2sv", data.essay2);
+    submissionData.append("essay_about_you", data.essay1);
 
     try {
       const res = await fetch(
         "https://a2sv-application-platform-backend-team6.onrender.com/applications/",
         {
           method: "POST",
-          headers: {
-            // "Authorization": `Bearer ${token}`, // Add token if needed
-          },
-          body: formData,
+          body: submissionData,
+          // headers: {
+          //   "Authorization": `Bearer ${token}` // if needed
+          // },
         }
       );
-      if (!res.ok) throw new Error("Failed to submit application");
-      // Optionally handle response
+
+      if (!res.ok) {
+        throw new Error("Failed to submit application");
+      }
+
       router.push("/applicant/applicationForms/success");
     } catch (err: any) {
       setError(err.message || "Submission failed");
@@ -53,6 +66,7 @@ export default function ThirdStep() {
         steps={["Personal Info", "Coding Profiles", "Essays & Resume"]}
         activeStep={3}
       />
+
       <form className="space-y-4 mt-6" onSubmit={handleSubmit}>
         <Input
           label="Tell us about yourself"
@@ -60,16 +74,22 @@ export default function ThirdStep() {
           placeholder="Write your answer here..."
           textarea
           value={data.essay1}
-          onChange={(e) => setData((d) => ({ ...d, essay1: e.target.value }))}
+          onChange={(e) =>
+            dispatch(setField({ field: "essay1", value: e.target.value }))
+          }
         />
+
         <Input
           label="Why do you want to join us"
           name="essay2"
           placeholder="Write your answer here..."
           textarea
           value={data.essay2}
-          onChange={(e) => setData((d) => ({ ...d, essay2: e.target.value }))}
+          onChange={(e) =>
+            dispatch(setField({ field: "essay2", value: e.target.value }))
+          }
         />
+
         <div>
           <label
             htmlFor="resume"
@@ -82,15 +102,17 @@ export default function ThirdStep() {
             name="resume"
             id="resume"
             accept=".pdf"
+            required
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
             onChange={(e) => {
               const file = e.target.files?.[0] || null;
-              setData((d) => ({ ...d, resume: file }));
+              dispatch(setField({ field: "resume", value: file }));
             }}
-            required
           />
         </div>
-        {error && <div className="text-red-500">{error}</div>}
+
+        {error && <div className="text-red-500 text-sm">{error}</div>}
+
         <div className="flex flex-col sm:flex-row justify-between gap-2 mt-6">
           <Button
             variant="secondary"
@@ -99,6 +121,7 @@ export default function ThirdStep() {
           >
             Back
           </Button>
+
           <Button type="submit" variant="primary" disabled={submitting}>
             {submitting ? "Submitting..." : "Submit Application"}
           </Button>

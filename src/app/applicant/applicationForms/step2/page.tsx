@@ -1,13 +1,15 @@
 "use client";
-import Button from "@/src/app/components/Button";
-import Input from "@/src/app/components/Input";
-import Stepper from "@/src/app/components/Stepper";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/src/app/store";
+import { setField } from "@/src/app/applicant/applicantSlice";
 import { useRouter } from "next/navigation";
-import { useApplicationForm } from "@/src/lib/ApplicationFormContext";
-
+import Stepper from "@/src/app/components/Stepper";
+import Input from "@/src/app/components/Input";
+import Button from "@/src/app/components/Button";
 export default function SecondStep() {
   const router = useRouter();
-  const { data, setData } = useApplicationForm();
+  const dispatch = useDispatch();
+  const formData = useSelector((state: RootState) => state.applicant);
 
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-8">
@@ -27,24 +29,28 @@ export default function SecondStep() {
           label="Codeforces Username"
           name="codeforces"
           placeholder="Enter your Codeforces handle"
-          value={data.codeforces}
+          value={formData.codeforces}
           onChange={(e) =>
-            setData((d) => ({ ...d, codeforces: e.target.value }))
+            dispatch(setField({ field: "codeforces", value: e.target.value }))
           }
         />
         <Input
           label="Leetcode Username"
           name="leetcode"
           placeholder="Enter your Leetcode handle"
-          value={data.leetcode}
-          onChange={(e) => setData((d) => ({ ...d, leetcode: e.target.value }))}
+          value={formData.leetcode}
+          onChange={(e) =>
+            dispatch(setField({ field: "leetcode", value: e.target.value }))
+          }
         />
         <Input
           label="Github Profile URL"
           name="github"
           placeholder="https://github.com/yourusername"
-          value={data.github}
-          onChange={(e) => setData((d) => ({ ...d, github: e.target.value }))}
+          value={formData.github}
+          onChange={(e) =>
+            dispatch(setField({ field: "github", value: e.target.value }))
+          }
         />
 
         <div className="flex flex-col sm:flex-row justify-between gap-2 mt-6">
