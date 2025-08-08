@@ -1,18 +1,19 @@
-"use client"
+"use client";
 
-import React, { useState, Suspense } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useSearchParams } from "next/navigation"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Footer } from "../../components/Footer"
-import { motion, AnimatePresence } from "framer-motion"
-import { MenuIcon, XIcon } from "lucide-react"
+import React, { useState, Suspense } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Footer } from "../../components/Footer";
+import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
 
 function Header() {
-  const [menuOpen, setMenuOpen] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <motion.header
@@ -30,57 +31,67 @@ function Header() {
           className="h-8 w-auto"
         />
       </Link>
-
-      {/* (Optionally include desktop/mobile nav here) */}
     </motion.header>
-  )
+  );
 }
 
 function ResetPasswordContent() {
-  const searchParams = useSearchParams()
-  const token = searchParams.get("token")
+  const searchParams = useSearchParams();
+  const token = searchParams?.get("token");
+  const router = useRouter();
 
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [message, setMessage] = useState("")
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setMessage("")
+    e.preventDefault();
+    setError("");
+    setMessage("");
 
     if (!newPassword || !confirmPassword) {
-      return setError("Please fill in both fields.")
+      return setError("Please fill in both fields.");
     }
     if (newPassword !== confirmPassword) {
-      return setError("Passwords do not match.")
+      return setError("Passwords do not match.");
     }
     if (!token) {
-      return setError("Invalid or missing token.")
+      return setError("Invalid or missing token.");
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
-      const res = await fetch("/api/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password: newPassword }),
-      })
+      const res = await fetch(
+        "https://a2sv-application-platform-backend-team6.onrender.com/auth/reset-password",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token,
+            new_password: newPassword,
+          }),
+        }
+      );
 
-      const data = await res.json()
-      if (res.ok) {
-        setMessage(data.message || "Password reset successfully!")
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(
+          data.message || "Your password has been successfully reset."
+        );
+        setTimeout(() => {
+          router.replace("/auth/reset-password/confirmation");
+        }, 1000);
       } else {
-        setError(data.message || "Failed to reset password.")
+        setError(data.message || "Failed to reset password.");
       }
     } catch {
-      setError("Something went wrong. Please try again.")
+      setError("Something went wrong. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -137,7 +148,7 @@ function ResetPasswordContent() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }
 
 export default function ResetPasswordPage() {
@@ -145,5 +156,5 @@ export default function ResetPasswordPage() {
     <Suspense fallback={<div>Loading...</div>}>
       <ResetPasswordContent />
     </Suspense>
-  )
+  );
 }

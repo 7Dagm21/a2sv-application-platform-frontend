@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
+import Providers from "../providers/Providers"; // adjust the import path as necessary
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,20 +18,19 @@ export const metadata: Metadata = {
   description:
     "A fully responsive and mobile-first solution for the A2SV Application Platform MVP",
   icons: {
-    icon: "/images/a2sv-favicon.png", 
+    icon: "/a2sv-favicon.png", 
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Toaster />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
