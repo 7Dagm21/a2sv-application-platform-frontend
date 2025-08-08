@@ -109,7 +109,7 @@ export default function LoginPage() {
       if (role) {
         role = role.toLowerCase();
         if (role === "applicant") {
-          router.replace("/applicant/dashboard");
+          router.replace("/applicant/dashboard/welcome");
         } else if (role === "reviewer") {
           router.replace("/reviewer/dashboard");
         } else if (role === "manager") {
