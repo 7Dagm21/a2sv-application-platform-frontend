@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Redirect if already logged in as admin.
+  
   useEffect(() => {
     const accessToken =
       localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
