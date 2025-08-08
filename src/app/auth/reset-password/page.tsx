@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 
 function Header() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (

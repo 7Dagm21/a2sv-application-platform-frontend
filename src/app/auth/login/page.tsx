@@ -13,6 +13,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { MenuIcon, XIcon } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
+import { Session } from "next-auth";
+
+// Define an interface to extend the session with the "remember" property
+interface ExtendedSession extends Session {
+  remember?: string;
+}
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -101,7 +107,10 @@ export default function LoginPage() {
   // Auto-redirect only if session exists and remember was checked
   useEffect(() => {
     if (status === "loading") return;
-    if (session && (session as any).remember === "true") {
+    if (
+      session &&
+      (session as ExtendedSession).remember === "true"
+    ) {
       const role = session.user.role;
       if (role === "applicant") {
         router.replace("/applicant/dashboard/welcome");
@@ -116,7 +125,7 @@ export default function LoginPage() {
   }, [session, status, router]);
 
   // Show a loader so the login UI isn’t displayed when a session (with remember) exists.
-  if (status === "loading" || (session && (session as any).remember === "true")) {
+  if (status === "loading" || (session && (session as ExtendedSession).remember === "true")) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
@@ -181,7 +190,9 @@ export default function LoginPage() {
                 <Checkbox
                   id="remember-me"
                   checked={rememberMe}
-                  onCheckedChange={(checked) => typeof checked === "boolean" && setRememberMe(checked)}
+                  onCheckedChange={(checked) =>
+                    typeof checked === "boolean" && setRememberMe(checked)
+                  }
                 />
                 <label htmlFor="remember-me" className="text-gray-600">
                   Remember me
@@ -192,7 +203,10 @@ export default function LoginPage() {
               </Link>
             </div>
             {error && <p className="text-red-600 text-sm">{error}</p>}
-            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md flex items-center justify-center gap-2">
+            <Button
+              type="submit"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md flex items-center justify-center gap-2"
+            >
               <Lock className="w-4 h-4" />
               Sign in
             </Button>

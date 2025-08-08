@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Lock } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { signIn, useSession } from "next-auth/react";
 
 export default function AdminLoginPage() {
@@ -20,24 +20,29 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
 
-  // Auto-redirect only when session exists AND the remember flag is "true"
+  // Auto-redirect if session exists, remember is "true", and the role is admin.
   useEffect(() => {
     if (status === "loading") return;
     if (
       session &&
-      (session as any).remember === "true" &&
+      (session as unknown as { remember: string }).remember === "true" &&
       session.user?.role?.toLowerCase() === "admin"
     ) {
       router.replace("/admin/dashboard");
     }
   }, [session, status, router]);
 
-  // If status is loading or the session with remembered flag exists, show a loader.
   if (
     status === "loading" ||
-    (session && (session as any).remember === "true" && session.user?.role?.toLowerCase() === "admin")
+    (session &&
+      (session as unknown as { remember: string }).remember === "true" &&
+      session.user?.role?.toLowerCase() === "admin")
   ) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -47,7 +52,6 @@ export default function AdminLoginPage() {
       redirect: false,
       email,
       password,
-      // Pass the remember flag as a string ("true" or "false")
       remember: rememberMe ? "true" : "false",
       callbackUrl: "/admin/dashboard",
     });
@@ -56,7 +60,7 @@ export default function AdminLoginPage() {
       toast.error(result.error);
     } else {
       toast.success("Login successful");
-      // Redirection will occur once the session is refreshed and useEffect runs.
+      // Redirection is handled once the session state updates.
     }
     setLoading(false);
   };
