@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Lock } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { signIn, useSession } from "next-auth/react";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -17,59 +18,47 @@ export default function AdminLoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { data: session, status } = useSession();
 
-  
+  // Auto-redirect only when session exists AND the remember flag is "true"
   useEffect(() => {
-    const accessToken =
-      localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
-    const role = localStorage.getItem("role") || sessionStorage.getItem("role");
-    if (accessToken && role && role.toLowerCase() === "admin") {
+    if (status === "loading") return;
+    if (
+      session &&
+      (session as any).remember === "true" &&
+      session.user?.role?.toLowerCase() === "admin"
+    ) {
       router.replace("/admin/dashboard");
     }
-  }, [router]);
+  }, [session, status, router]);
+
+  // If status is loading or the session with remembered flag exists, show a loader.
+  if (
+    status === "loading" ||
+    (session && (session as any).remember === "true" && session.user?.role?.toLowerCase() === "admin")
+  ) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+      // Pass the remember flag as a string ("true" or "false")
+      remember: rememberMe ? "true" : "false",
+      callbackUrl: "/admin/dashboard",
+    });
 
-    try {
-      const res = await fetch(
-        "https://a2sv-application-platform-backend-team6.onrender.com/admin/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        const { access, refresh } = data.data;
-
-        // Store tokens and explicitly store the role as "admin".
-        if (rememberMe) {
-          localStorage.setItem("accessToken", access);
-          localStorage.setItem("refreshToken", refresh);
-          localStorage.setItem("role", "admin");
-        } else {
-          sessionStorage.setItem("accessToken", access);
-          sessionStorage.setItem("refreshToken", refresh);
-          sessionStorage.setItem("role", "admin");
-        }
-
-        toast.success("Login successful");
-
-        // Immediately replace the current route to admin dashboard.
-        router.replace("/admin/dashboard");
-      } else {
-        toast.error(data.message || "Login failed. Check your credentials.");
-      }
-    } catch {
-      toast.error("Something went wrong. Try again.");
-    } finally {
-      setLoading(false);
+    if (result?.error) {
+      toast.error(result.error);
+    } else {
+      toast.success("Login successful");
+      // Redirection will occur once the session is refreshed and useEffect runs.
     }
+    setLoading(false);
   };
 
   return (
@@ -83,12 +72,7 @@ export default function AdminLoginPage() {
       >
         <div className="container mx-auto flex items-center justify-between">
           <Link href="/">
-            <Image
-              src="/images/a2sv-logo.svg"
-              width={150}
-              height={36}
-              alt="A2SV Logo"
-            />
+            <Image src="/images/a2sv-logo.svg" width={150} height={36} alt="A2SV Logo" />
           </Link>
         </div>
       </motion.header>
@@ -98,7 +82,6 @@ export default function AdminLoginPage() {
         {/* Login Card */}
         <div className="w-full max-w-md space-y-6 bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-center">
           <h1 className="text-3xl font-bold text-black">Admin Login</h1>
-
           <form className="space-y-4 text-left" onSubmit={handleLogin}>
             <Input
               id="email"
@@ -108,7 +91,6 @@ export default function AdminLoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-
             <Input
               id="password"
               type="password"
@@ -117,7 +99,6 @@ export default function AdminLoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -133,14 +114,10 @@ export default function AdminLoginPage() {
                   Remember me
                 </label>
               </div>
-              <Link
-                href="/auth/forgot-password"
-                className="text-indigo-500 hover:underline"
-              >
+              <Link href="/auth/forgot-password" className="text-indigo-500 hover:underline">
                 Forgot password?
               </Link>
             </div>
-
             <Button
               type="submit"
               disabled={loading}
@@ -150,7 +127,6 @@ export default function AdminLoginPage() {
               {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-
           <Link href="/" className="text-sm text-indigo-500 hover:underline">
             Back to Home
           </Link>
