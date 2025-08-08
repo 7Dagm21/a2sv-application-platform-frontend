@@ -1,58 +1,20 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Lock } from "lucide-react"
-import { Footer } from "../../components/Footer"
-import { motion, AnimatePresence } from "framer-motion"
-import { toast } from "react-hot-toast"
-import { MenuIcon, XIcon } from "lucide-react"
-
-async function refreshAccessToken() {
-  const refreshToken =
-    localStorage.getItem("refreshToken") || sessionStorage.getItem("refreshToken")
-  if (!refreshToken) return null
-
-  try {
-    const res = await fetch(
-      "https://a2sv-application-platform-backend-team6.onrender.com/auth/token/refresh",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${refreshToken}`,
-        },
-      }
-    )
-
-    const data = await res.json()
-    if (res.ok && data.success) {
-      const newAccessToken = data.data.access
-      if (localStorage.getItem("refreshToken")) {
-        localStorage.setItem("accessToken", newAccessToken)
-      } else {
-        sessionStorage.setItem("accessToken", newAccessToken)
-      }
-      return newAccessToken
-    } else {
-      localStorage.removeItem("accessToken")
-      localStorage.removeItem("refreshToken")
-      sessionStorage.removeItem("accessToken")
-      sessionStorage.removeItem("refreshToken")
-      return null
-    }
-  } catch (error) {
-    console.error("Error refreshing access token:", error)
-    return null
-  }
-}
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Lock } from "lucide-react";
+import { Footer } from "../../components/Footer";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
+import { MenuIcon, XIcon } from "lucide-react";
 
 function Header() {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <motion.header
@@ -72,19 +34,11 @@ function Header() {
       </Link>
 
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-        <Link href="#" className="hover:text-indigo-600 transition-colors duration-200">
-          The Journey
+        <Link href="/" className="hover:text-indigo-600 transition-colors duration-200">
+          Back to Home
         </Link>
-        <Link href="#" className="hover:text-indigo-600 transition-colors duration-200">
-          About
-        </Link>
-        <Link href="#" className="hover:text-indigo-600 transition-colors duration-200">
-          Testimonials
-        </Link>
-        <Link href="/auth/signup">
-          <Button className="bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-2 rounded-md shadow-md transition-all duration-300 hover:scale-105">
-            Sign In
-          </Button>
+        <Link href="/auth/signup" className="hover:text-indigo-600 transition-colors duration-200">
+          Create Account
         </Link>
       </nav>
 
@@ -117,30 +71,18 @@ function Header() {
               </button>
               <nav className="flex flex-col gap-4 items-center">
                 <Link
-                  href="#"
+                  href="/"
                   onClick={() => setMenuOpen(false)}
-                  className="text-lg font-medium text-gray-700 hover:text-indigo-600 transition-colors duration-200"
+                  className="text-lg font-medium text-gray-700 hover:text-indigo-600"
                 >
-                  The Journey
+                  Back to Home
                 </Link>
                 <Link
-                  href="#"
+                  href="/auth/signup"
                   onClick={() => setMenuOpen(false)}
-                  className="text-lg font-medium text-gray-700 hover:text-indigo-600 transition-colors duration-200"
+                  className="text-lg font-medium text-gray-700 hover:text-indigo-600"
                 >
-                  About
-                </Link>
-                <Link
-                  href="#"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-lg font-medium text-gray-700 hover:text-indigo-600 transition-colors duration-200"
-                >
-                  Testimonials
-                </Link>
-                <Link href="/auth/signup" onClick={() => setMenuOpen(false)}>
-                  <Button className="w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-3 rounded-md shadow-lg text-lg transition-transform duration-300 hover:scale-105">
-                    Sign In
-                  </Button>
+                  Create Account
                 </Link>
               </nav>
             </div>
@@ -148,21 +90,54 @@ function Header() {
         )}
       </AnimatePresence>
     </motion.header>
-  )
+  );
 }
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [checking, setChecking] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+    if (accessToken) {
+      let role = localStorage.getItem("role") || sessionStorage.getItem("role");
+      if (role) {
+        role = role.toLowerCase();
+        if (role === "applicant") {
+          router.replace("/applicant/dashboard");
+        } else if (role === "reviewer") {
+          router.replace("/reviewer/dashboard");
+        } else if (role === "manager") {
+          router.replace("/manager/dashboard");
+        } else if (role === "admin") {
+          router.replace("/admin/dashboard");
+        } else {
+          // Optionally handle unexpected role
+          console.error("Unexpected role:", role);
+          router.replace("/"); // or another safe route
+        }
+      } else {
+        console.error("Role not found despite access token.");
+        setChecking(false);
+      }
+    } else {
+      setChecking(false);
+    }
+  }, [router]);
+
+  if (checking) {
+    return null;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
       const res = await fetch(
@@ -174,43 +149,46 @@ export default function LoginPage() {
           },
           body: JSON.stringify({ email, password }),
         }
-      )
+      );
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (res.ok && data.success) {
-        const { access, refresh, role } = data.data
+        const { access, refresh, role } = data.data;
 
         if (rememberMe) {
-          localStorage.setItem("accessToken", access)
-          localStorage.setItem("refreshToken", refresh)
+          localStorage.setItem("accessToken", access);
+          localStorage.setItem("refreshToken", refresh);
+          localStorage.setItem("role", role);
         } else {
-          sessionStorage.setItem("accessToken", access)
-          sessionStorage.setItem("refreshToken", refresh)
+          sessionStorage.setItem("accessToken", access);
+          sessionStorage.setItem("refreshToken", refresh);
+          sessionStorage.setItem("role", role);
         }
 
-        toast.success("Login successful")
+        toast.success("Login successful"); // Show toast
 
+        // Redirect immediately
         if (role === "applicant") {
-          router.push("/applicant/dashboard")
+          router.replace("/applicant/dashboard/welcome");
         } else if (role === "reviewer") {
-          router.push("/reviewer/dashboard")
+          router.replace("/reviewer/dashboard");
         } else if (role === "manager") {
-          router.push("/manager/dashboard")
+          router.replace("/manager/dashboard");
         } else if (role === "admin") {
-          router.push("/admin/dashboard")
+          router.replace("/admin/dashboard");
         } else {
-          router.push("/")
+          router.replace("/");
         }
       } else {
-        setError(data.message || "Login failed. Please check your credentials.")
+        setError(data.message || "Login failed. Please check your credentials.");
       }
     } catch {
-      setError("Something went wrong. Please try again.")
+      setError("Something went wrong. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -218,12 +196,7 @@ export default function LoginPage() {
       <main className="flex-1 flex items-center justify-center py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="w-full max-w-md space-y-6 text-center bg-white p-8 rounded-xl shadow-lg border border-gray-200">
           <div className="flex flex-col items-center space-y-4">
-            <Image
-              src="/images/a2sv-logo.svg"
-              width={150}
-              height={36}
-              alt="A2SV Logo"
-            />
+            <Image src="/images/a2sv-logo.svg" width={150} height={36} alt="A2SV Logo" />
             <h1 className="text-3xl font-bold text-black">Sign in to your account</h1>
             <div className="text-sm text-gray-600 flex gap-2">
               <Link href="/" className="text-indigo-500 hover:underline">
@@ -235,7 +208,6 @@ export default function LoginPage() {
               </Link>
             </div>
           </div>
-
           <form className="space-y-4 text-left" onSubmit={handleLogin}>
             <Input
               id="email"
@@ -260,7 +232,7 @@ export default function LoginPage() {
                   checked={rememberMe}
                   onCheckedChange={(checked) => {
                     if (typeof checked === "boolean") {
-                      setRememberMe(checked)
+                      setRememberMe(checked);
                     }
                   }}
                 />
@@ -268,16 +240,11 @@ export default function LoginPage() {
                   Remember me
                 </label>
               </div>
-              <Link
-                href="/auth/forgot-password"
-                className="text-indigo-500 hover:underline"
-              >
+              <Link href="/auth/forgot-password" className="text-indigo-500 hover:underline">
                 Forgot password?
               </Link>
             </div>
-
             {error && <p className="text-red-600 text-sm">{error}</p>}
-
             <Button
               type="submit"
               disabled={loading}
@@ -289,9 +256,8 @@ export default function LoginPage() {
           </form>
         </div>
       </main>
-
       <Footer />
     </div>
-  )
+  );
 }
 

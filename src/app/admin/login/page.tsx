@@ -1,26 +1,36 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Lock } from "lucide-react"
-import { toast } from "react-hot-toast"
-import { motion } from "framer-motion"
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Lock } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  // Redirect if already logged in as admin.
+  useEffect(() => {
+    const accessToken =
+      localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+    const role = localStorage.getItem("role") || sessionStorage.getItem("role");
+    if (accessToken && role && role.toLowerCase() === "admin") {
+      router.replace("/admin/dashboard");
+    }
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
       const res = await fetch(
@@ -30,32 +40,37 @@ export default function AdminLoginPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         }
-      )
+      );
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (res.ok && data.success) {
-        const { access, refresh } = data.data
+        const { access, refresh } = data.data;
 
+        // Store tokens and explicitly store the role as "admin".
         if (rememberMe) {
-          localStorage.setItem("accessToken", access)
-          localStorage.setItem("refreshToken", refresh)
+          localStorage.setItem("accessToken", access);
+          localStorage.setItem("refreshToken", refresh);
+          localStorage.setItem("role", "admin");
         } else {
-          sessionStorage.setItem("accessToken", access)
-          sessionStorage.setItem("refreshToken", refresh)
+          sessionStorage.setItem("accessToken", access);
+          sessionStorage.setItem("refreshToken", refresh);
+          sessionStorage.setItem("role", "admin");
         }
 
-        toast.success("Login successful")
-        router.push("/admin/dashboard")
+        toast.success("Login successful");
+
+        // Immediately replace the current route to admin dashboard.
+        router.replace("/admin/dashboard");
       } else {
-        toast.error(data.message || "Login failed. Check your credentials.")
+        toast.error(data.message || "Login failed. Check your credentials.");
       }
     } catch {
-      toast.error("Something went wrong. Try again.")
+      toast.error("Something went wrong. Try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -67,7 +82,6 @@ export default function AdminLoginPage() {
         className="w-full py-4 px-6 shadow-sm border-b border-gray-100 bg-white/80 backdrop-blur-md"
       >
         <div className="container mx-auto flex items-center justify-between">
-          {/* Logo */}
           <Link href="/">
             <Image
               src="/images/a2sv-logo.svg"
@@ -78,7 +92,7 @@ export default function AdminLoginPage() {
           </Link>
         </div>
       </motion.header>
-      
+
       {/* Main Content */}
       <div className="flex flex-col items-center justify-center flex-1 px-4 my-8">
         {/* Login Card */}
@@ -111,7 +125,7 @@ export default function AdminLoginPage() {
                   checked={rememberMe}
                   onCheckedChange={(checked) => {
                     if (typeof checked === "boolean") {
-                      setRememberMe(checked)
+                      setRememberMe(checked);
                     }
                   }}
                 />
@@ -143,5 +157,5 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
