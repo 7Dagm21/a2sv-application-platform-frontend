@@ -12,10 +12,16 @@ import { Footer } from "../../components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { MenuIcon, XIcon } from "lucide-react";
+import { signIn, useSession } from "next-auth/react";
+import { Session } from "next-auth";
+
+// Define an interface to extend the session with the "remember" property
+interface ExtendedSession extends Session {
+  remember?: string;
+}
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-
   return (
     <motion.header
       initial={{ y: -100 }}
@@ -32,7 +38,6 @@ function Header() {
           className="h-8 w-auto"
         />
       </Link>
-
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
         <Link href="/" className="hover:text-indigo-600 transition-colors duration-200">
           Back to Home
@@ -41,7 +46,6 @@ function Header() {
           Create Account
         </Link>
       </nav>
-
       <Button
         variant="ghost"
         size="icon"
@@ -51,7 +55,6 @@ function Header() {
       >
         {menuOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
       </Button>
-
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -73,14 +76,14 @@ function Header() {
                 <Link
                   href="/"
                   onClick={() => setMenuOpen(false)}
-                  className="text-lg font-medium text-gray-700 hover:text-indigo-600"
+                  className="text-lg font-medium text-gray-700 hover:text-indigo-600 transition-colors duration-200"
                 >
                   Back to Home
                 </Link>
                 <Link
                   href="/auth/signup"
                   onClick={() => setMenuOpen(false)}
-                  className="text-lg font-medium text-gray-700 hover:text-indigo-600"
+                  className="text-lg font-medium text-gray-700 hover:text-indigo-600 transition-colors duration-200"
                 >
                   Create Account
                 </Link>
@@ -97,96 +100,53 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [checking, setChecking] = useState(true);
   const router = useRouter();
+  const { data: session, status } = useSession();
 
+  // Auto-redirect only if session exists and remember was checked
   useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
-    if (accessToken) {
-      let role = localStorage.getItem("role") || sessionStorage.getItem("role");
-      if (role) {
-        role = role.toLowerCase();
-        if (role === "applicant") {
-          router.replace("/applicant/dashboard/welcome");
-        } else if (role === "reviewer") {
-          router.replace("/reviewer/dashboard");
-        } else if (role === "manager") {
-          router.replace("/manager/dashboard");
-        } else if (role === "admin") {
-          router.replace("/admin/dashboard");
-        } else {
-          // Optionally handle unexpected role
-          console.error("Unexpected role:", role);
-          router.replace("/"); // or another safe route
-        }
+    if (status === "loading") return;
+    if (
+      session &&
+      (session as ExtendedSession).remember === "true"
+    ) {
+      const role = session.user.role;
+      if (role === "applicant") {
+        router.replace("/applicant/dashboard/welcome");
+      } else if (role === "reviewer") {
+        router.replace("/reviewer/dashboard");
+      } else if (role === "manager") {
+        router.replace("/manager/dashboard");
       } else {
-        console.error("Role not found despite access token.");
-        setChecking(false);
+        router.replace("/");
       }
-    } else {
-      setChecking(false);
     }
-  }, [router]);
+  }, [session, status, router]);
 
-  if (checking) {
-    return null;
+  // Show a loader so the login UI isn’t displayed when a session (with remember) exists.
+  if (status === "loading" || (session && (session as ExtendedSession).remember === "true")) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
-    try {
-      const res = await fetch(
-        "https://a2sv-application-platform-backend-team6.onrender.com/auth/token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+      callbackUrl: "/",
+      remember: rememberMe ? "true" : "false",
+    });
 
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        const { access, refresh, role } = data.data;
-
-        if (rememberMe) {
-          localStorage.setItem("accessToken", access);
-          localStorage.setItem("refreshToken", refresh);
-          localStorage.setItem("role", role);
-        } else {
-          sessionStorage.setItem("accessToken", access);
-          sessionStorage.setItem("refreshToken", refresh);
-          sessionStorage.setItem("role", role);
-        }
-
-        toast.success("Login successful"); // Show toast
-
-        // Redirect immediately
-        if (role === "applicant") {
-          router.replace("/applicant/dashboard/welcome");
-        } else if (role === "reviewer") {
-          router.replace("/reviewer/dashboard");
-        } else if (role === "manager") {
-          router.replace("/manager/dashboard");
-        } else if (role === "admin") {
-          router.replace("/admin/dashboard");
-        } else {
-          router.replace("/");
-        }
-      } else {
-        setError(data.message || "Login failed. Please check your credentials.");
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+    if (result?.error) {
+      setError(result.error);
+      toast.error(result.error);
+    } else {
+      toast.success("Login successful");
+      // Redirection will be handled once the session is available.
     }
   };
 
@@ -230,11 +190,9 @@ export default function LoginPage() {
                 <Checkbox
                   id="remember-me"
                   checked={rememberMe}
-                  onCheckedChange={(checked) => {
-                    if (typeof checked === "boolean") {
-                      setRememberMe(checked);
-                    }
-                  }}
+                  onCheckedChange={(checked) =>
+                    typeof checked === "boolean" && setRememberMe(checked)
+                  }
                 />
                 <label htmlFor="remember-me" className="text-gray-600">
                   Remember me
@@ -247,11 +205,10 @@ export default function LoginPage() {
             {error && <p className="text-red-600 text-sm">{error}</p>}
             <Button
               type="submit"
-              disabled={loading}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-md flex items-center justify-center gap-2"
             >
               <Lock className="w-4 h-4" />
-              {loading ? "Signing in..." : "Sign in"}
+              Sign in
             </Button>
           </form>
         </div>

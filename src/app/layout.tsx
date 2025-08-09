@@ -1,10 +1,6 @@
-"use client";
-
-import "./globals.css";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ApplicationFormProvider } from "../lib/ApplicationFormContext";
-import { Provider } from "react-redux";
-import { store } from "./store";
+import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
@@ -22,7 +18,7 @@ export const metadata = {
   description:
     "A fully responsive and mobile-first solution for the A2SV Application Platform MVP",
   icons: {
-    icon: "/images/a2sv-favicon.png",
+    icon: "/a2sv-favicon.png", 
   },
 };
 
@@ -32,12 +28,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>
-        <Provider store={store}>
-          <ApplicationFormProvider>{children}</ApplicationFormProvider>
-        </Provider>
-        <Toaster />
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
