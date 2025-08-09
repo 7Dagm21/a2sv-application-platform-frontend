@@ -1,94 +1,77 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ApplicationData } from "@/src/app/components/ApplicantProgress/ApplicationTimeline";
-import { ApplicationTimeline } from "@/src/app/components/ApplicantProgress/ApplicationTimeline";
-import { ImportantUpdates } from "@/src/app/components/ApplicantProgress/ImportantUpdates";
-import { InterviewCard } from "@/src/app/components/ApplicantProgress/InterviewCard";
-import { RecentActivity } from "@/src/app/components/ApplicantProgress/RecentActivity";
-import { Header } from "@/src/app/components/Header/HeaderProgress";
+import React from "react";
+import ApplicationTimeline from "@/src/app/components/ApplicantDashboard/ApplicationTimeline";
+import RecentActivity from "@/src/app/components/ApplicantDashboard/RecentActivity";
+import { ImportantUpdates } from "@/src/app/components/ApplicantDashboard/ImportantUpdates";
+import { useAppSelector } from "@/src/app/store/hooks";
+import HeaderProgress from "@/src/app/components/Header/HeaderProgress";
+import { Header } from "@/src/app/components/Header/HeaderDashboard";
 
 export default function ProgressPage() {
-  const [application, setApplication] = useState<ApplicationData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const app = useAppSelector((s) => s.application.current);
 
-  // Replace with your real token logic
-  const accessToken =
-    typeof window !== "undefined"
-      ? localStorage.getItem("accessToken") || ""
-      : "";
-
-  useEffect(() => {
-    async function fetchStatusAndDetails() {
-      try {
-        // 1. Get status and id
-        const statusRes = await fetch(
-          "https://a2sv-application-platform-backend-team6.onrender.com/applications/my-status",
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const statusJson = await statusRes.json();
-        if (!statusJson.success || !statusJson.data?.id)
-          throw new Error("No application found");
-
-        // 2. Get full application details
-        const appRes = await fetch(
-          `https://a2sv-application-platform-backend-team6.onrender.com/applications/${statusJson.data.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const appJson = await appRes.json();
-        if (appJson.success) setApplication(appJson.data);
-        else throw new Error("No application details found");
-      } catch (err) {
-        setApplication(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (accessToken) fetchStatusAndDetails();
-    else setLoading(false);
-  }, [accessToken]);
-
-  if (loading) return <p className="text-center p-8">Loading...</p>;
-  if (!application)
-    return <p className="text-center p-8">No application data found.</p>;
-
-  const { status, submitted_at } = application;
+  // Build activities list for RecentActivity component
+  const activities = [];
+  if (app?.submitted_at) {
+    activities.push({
+      title: "Application Submitted",
+      date: app.submitted_at,
+    });
+  }
+  // Add more activities if available
+  // if (app?.interview_date) {
+  //   activities.push({ title: "Interview Scheduled", date: app.interview_date });
+  // }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50">
+      {/* Top Navigation */}
       <Header />
-      <main className="w-full max-w-3xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 mt-2">
-          Your Application Progress
-        </h1>
-        <p className="text-sm text-gray-600 mb-4">
-          You're on your way! Here's a summary of your application status.
-        </p>
 
-        {/* Timeline always on top on mobile */}
-        <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-          <div className="flex-1">
-            <ApplicationTimeline
-              status={status}
-              submittedAt={new Date(submitted_at).toLocaleDateString()}
-            />
+      {/* Page Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        {/* Progress Header */}
+        <HeaderProgress />
+
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Timeline */}
+          <div className="lg:col-span-2">
+            <div className="bg-white shadow-sm rounded-lg p-6">
+              <ApplicationTimeline />
+            </div>
           </div>
-          <div className="flex flex-col gap-4 md:w-80">
-            <RecentActivity submittedAt={submitted_at} />
-            <ImportantUpdates />
-            {(status === "under_review" ||
-              status === "interview_scheduled") && <InterviewCard />}
+
+          {/* Right Column - Side Cards */}
+          <div className="flex flex-col gap-4">
+            <div className="bg-white shadow-sm rounded-lg p-4">
+              <RecentActivity activities={activities} />
+            </div>
+
+            <div className="bg-white shadow-sm rounded-lg p-4">
+              <ImportantUpdates />
+            </div>
+
+            <div className="bg-indigo-600 text-white rounded-lg p-4 shadow-sm">
+              <h3 className="text-sm font-semibold">
+                Get Ready for the Interview!
+              </h3>
+              <p className="text-xs mt-1 opacity-90">
+                While you wait, it’s a great time to prepare. Practice your
+                problem-solving skills on platforms like LeetCode and
+                Codeforces.
+              </p>
+              <a
+                href="/interview-guide"
+                className="mt-3 inline-block text-xs font-medium underline hover:opacity-80"
+              >
+                Read our interview page guide →
+              </a>
+            </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
