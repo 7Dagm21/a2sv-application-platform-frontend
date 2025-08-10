@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
+import Providers from "../providers/Providers"; // adjust the import path as necessary
 
 export const metadata: Metadata = {
   title: "A2SV Application",
@@ -15,16 +15,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
       >
-        <Toaster />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

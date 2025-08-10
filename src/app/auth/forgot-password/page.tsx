@@ -10,7 +10,7 @@ import { Footer } from "../../components/Footer"
 import { motion, AnimatePresence } from "framer-motion"
 import { MenuIcon, XIcon } from "lucide-react"
 
-// Make Header a local component (do not export it)
+// Local Header Component
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -28,6 +28,7 @@ function Header() {
           height={32}
           alt="A2SV Logo"
           className="h-8 w-auto"
+          
         />
       </Link>
 
@@ -129,10 +130,13 @@ export default function ForgotPasswordPage() {
     setMessage("")
 
     try {
-      const res = await fetch("/api/forgot-password", {
+      const res = await fetch("https://a2sv-application-platform-backend-team6.onrender.com/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+          email, 
+          callback_url: "http://localhost:3000/auth/reset-password"
+        }),
       })
 
       const data = await res.json()

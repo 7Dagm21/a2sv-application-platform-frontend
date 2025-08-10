@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Footer } from "../../components/Footer";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { MenuIcon, XIcon } from "lucide-react";
 
 function Header() {
   return (
@@ -27,8 +28,6 @@ function Header() {
           className="h-8 w-auto"
         />
       </Link>
-
-      {/* (Optionally include desktop/mobile nav here) */}
     </motion.header>
   );
 }
