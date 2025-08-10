@@ -1,19 +1,16 @@
-"use client"
+"use client";
 
-import React, { useState, Suspense } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useSearchParams } from "next/navigation"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Footer } from "../../components/Footer"
-import { motion, AnimatePresence } from "framer-motion"
-import { MenuIcon, XIcon } from "lucide-react"
+import React, { useState, Suspense } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Footer } from "../../components/Footer";
+import { motion } from "framer-motion";
 
 function Header() {
-  const [menuOpen, setMenuOpen] = useState(false)
-
   return (
     <motion.header
       initial={{ y: -100 }}
@@ -33,54 +30,54 @@ function Header() {
 
       {/* (Optionally include desktop/mobile nav here) */}
     </motion.header>
-  )
+  );
 }
 
 function ResetPasswordContent() {
-  const searchParams = useSearchParams()
-  const token = searchParams.get("token")
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
 
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [message, setMessage] = useState("")
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setMessage("")
+    e.preventDefault();
+    setError("");
+    setMessage("");
 
     if (!newPassword || !confirmPassword) {
-      return setError("Please fill in both fields.")
+      return setError("Please fill in both fields.");
     }
     if (newPassword !== confirmPassword) {
-      return setError("Passwords do not match.")
+      return setError("Passwords do not match.");
     }
     if (!token) {
-      return setError("Invalid or missing token.")
+      return setError("Invalid or missing token.");
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       const res = await fetch("/api/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password: newPassword }),
-      })
+      });
 
-      const data = await res.json()
+      const data = await res.json();
       if (res.ok) {
-        setMessage(data.message || "Password reset successfully!")
+        setMessage(data.message || "Password reset successfully!");
       } else {
-        setError(data.message || "Failed to reset password.")
+        setError(data.message || "Failed to reset password.");
       }
     } catch {
-      setError("Something went wrong. Please try again.")
+      setError("Something went wrong. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -131,13 +128,15 @@ function ResetPasswordContent() {
               </Button>
             </form>
             {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-            {message && <p className="mt-4 text-sm text-green-600">{message}</p>}
+            {message && (
+              <p className="mt-4 text-sm text-green-600">{message}</p>
+            )}
           </CardContent>
         </Card>
       </main>
       <Footer />
     </div>
-  )
+  );
 }
 
 export default function ResetPasswordPage() {
@@ -145,5 +144,5 @@ export default function ResetPasswordPage() {
     <Suspense fallback={<div>Loading...</div>}>
       <ResetPasswordContent />
     </Suspense>
-  )
+  );
 }

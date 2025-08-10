@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Lock } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -18,10 +18,10 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  
   useEffect(() => {
     const accessToken =
-      localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+      localStorage.getItem("accessToken") ||
+      sessionStorage.getItem("accessToken");
     const role = localStorage.getItem("role") || sessionStorage.getItem("role");
     if (accessToken && role && role.toLowerCase() === "admin") {
       router.replace("/admin/dashboard");
