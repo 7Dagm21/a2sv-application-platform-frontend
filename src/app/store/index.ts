@@ -3,7 +3,7 @@ import applicantReducer from '@/src/app/store/slices/applicantSlice';
 import profileReducer from "./slices/profileSlice";
 import cycleReducer from "./slices/cycleSlice";
 import applicationReducer from "./slices/applicationSlice";
-import { useDispatch, UseDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import authReducer from "@/src/app/store/slices/authSlice";
 
 export const store = configureStore({

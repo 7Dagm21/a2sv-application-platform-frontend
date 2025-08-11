@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface ProfileHeaderProps {
   userName: string;
@@ -24,7 +25,7 @@ export default function HeaderProfile({
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <div className="flex justify-items-start">
-          {logoUrl && <img src={logoUrl} alt="Logo" className="h-8 w-auto" />}
+          {logoUrl && <Image src={logoUrl} alt="Logo" className="h-8 w-auto" />}
         </div>
 
         <div className="flex items-center space-x-4">

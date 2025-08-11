@@ -1,7 +1,7 @@
 import ProfileHeader from "@/src/app/components/Header/HeaderProfile";
 import UserInfo from "@/src/app/components/ApplicantProfile/UserInfo";
 import PasswordForm from "@/src/app/components/ApplicantProfile/PasswordForm";
-import UserImage from "../components/UserImage";
+
 import { Footer } from "@/src/app/components/Footer/index";
 
 export default function ProfilePage() {
@@ -17,7 +17,7 @@ export default function ProfilePage() {
           logoUrl="/path/to/logo.png"
         />
 
-        <UserImage />
+        {/* <UserImage /> */}
         <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
             <UserInfo />

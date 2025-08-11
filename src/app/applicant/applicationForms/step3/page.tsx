@@ -1,56 +1,32 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/src/app/store";
+import { setField } from "@/src/app/store/slices/applicantSlice";
+import { setApplication } from "@/src/app/store/slices/applicationSlice";
 import { useRouter } from "next/navigation";
-import { AppDispatch, RootState } from "@/src/app/store";
-import { setField, setAllFields } from "@/src/app/store/slices/applicantSlice";
-import {
-  setApplication,
-  fetchApplication,
-} from "@/src/app/store/slices/applicationSlice";
+import { useSession } from "next-auth/react";
 import Stepper from "@/src/app/components/ApplicationForm/Stepper";
 import Input from "@/src/app/components/ApplicationForm/Input";
 import Button from "@/src/app/components/Button";
 import { Header } from "@/src/app/components/Header/HeaderForm";
-import { fetchProfile } from "@/src/app/store/slices/profileSlice";
 
-export default function ThirdStep() {
+export default function Step3() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const { data: session, status } = useSession();
   const data = useSelector((state: RootState) => state.applicant);
-  const profile = useSelector((state: RootState) => state.profile.data);
-
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resume, setResume] = useState<File | null>(null);
 
   useEffect(() => {
-    dispatch(fetchProfile());
-    const applicationId =
-      typeof window !== "undefined"
-        ? localStorage.getItem("applicationId")
-        : null;
-    if (applicationId) {
-      dispatch(fetchApplication(applicationId)).then((res: any) => {
-        // Prefill form if editing
-        if (res.payload) {
-          dispatch(
-            setAllFields({
-              idNumber: res.payload.student_id || "",
-              schoolName: res.payload.school || "",
-              degreeProgram: res.payload.degree || "",
-              codeforces: res.payload.codeforces_handle || "",
-              leetcode: res.payload.leetcode_handle || "",
-              essay1: res.payload.essay_about_you || "",
-              essay2: res.payload.essay_why_a2sv || "",
-              country: res.payload.country || "",
-            })
-          );
-        }
-      });
+    if (status === "unauthenticated") {
+      router.replace("/auth/login");
     }
-  }, [dispatch]);
+  }, [status, router]);
+
+  if (status === "loading") return <div>Loading...</div>;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,11 +59,10 @@ export default function ThirdStep() {
     submissionData.append("student_id", data.idNumber);
     if (data.country) submissionData.append("country", data.country);
 
-    const accessToken = localStorage.getItem("accessToken") || "";
     let applicationId = localStorage.getItem("applicationId");
 
     try {
-      let response, result;
+      let response: Response;
       if (applicationId) {
         response = await fetch(
           `https://a2sv-application-platform-backend-team6.onrender.com/applications/${applicationId}`,
@@ -95,7 +70,7 @@ export default function ThirdStep() {
             method: "PUT",
             body: submissionData,
             headers: {
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${session?.accessToken}`,
             },
           }
         );
@@ -106,13 +81,14 @@ export default function ThirdStep() {
             method: "POST",
             body: submissionData,
             headers: {
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${session?.accessToken}`,
             },
           }
         );
       }
 
-      result = await response.json();
+      const result = await response.json();
+
       if (!response.ok || !result.success) {
         throw new Error(result.message || "Failed to submit application");
       }
@@ -126,7 +102,7 @@ export default function ThirdStep() {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
         }
       );
@@ -135,8 +111,8 @@ export default function ThirdStep() {
 
       dispatch(setApplication(appDetails.data));
       router.push("/applicant/dashboard/progress");
-    } catch (err: any) {
-      setError(err.message || "Submission failed");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Submission failed");
     } finally {
       setSubmitting(false);
     }
@@ -144,36 +120,33 @@ export default function ThirdStep() {
 
   return (
     <main className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
-      <Header username={profile?.full_name || "Applicant"} />
+      <Header username={session?.user?.name || "Applicant"} />
       <div className="max-w-2xl mx-auto p-4 sm:p-8">
         <Stepper
           steps={["Personal Info", "Coding Profiles", "Essays & Resume"]}
           activeStep={3}
         />
-
         <form className="space-y-4 mt-6" onSubmit={handleSubmit}>
           <Input
             label="Tell us about yourself"
             name="essay1"
             placeholder="Write your answer here..."
             textarea
-            value={data.essay1}
+            value={data.essay1 ?? ""}
             onChange={(e) =>
               dispatch(setField({ field: "essay1", value: e.target.value }))
             }
           />
-
           <Input
             label="Why do you want to join us"
             name="essay2"
             placeholder="Write your answer here..."
             textarea
-            value={data.essay2}
+            value={data.essay2 ?? ""}
             onChange={(e) =>
               dispatch(setField({ field: "essay2", value: e.target.value }))
             }
           />
-
           <div>
             <label
               htmlFor="resume"
@@ -194,9 +167,7 @@ export default function ThirdStep() {
               }}
             />
           </div>
-
           {error && <div className="text-red-500 text-sm">{error}</div>}
-
           <div className="flex flex-col sm:flex-row justify-between gap-2 mt-6">
             <Button
               variant="secondary"
@@ -205,7 +176,6 @@ export default function ThirdStep() {
             >
               Back
             </Button>
-
             <Button type="submit" variant="primary" disabled={submitting}>
               {submitting ? "Submitting..." : "Submit Application"}
             </Button>

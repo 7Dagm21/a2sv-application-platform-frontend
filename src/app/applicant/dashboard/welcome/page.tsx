@@ -2,42 +2,96 @@
 
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProfile } from "@/src/app/store/slices/profileSlice";
 import {
   fetchCycles,
   selectActiveCycle,
 } from "@/src/app/store/slices/cycleSlice";
-import {
-  fetchApplication,
-  selectCurrentApplication,
-} from "@/src/app/store/slices/applicationSlice";
-import { RootState, AppDispatch } from "@/src/app/store";
+import { fetchProfile } from "@/src/app/store/slices/profileSlice";
+import { AppDispatch, RootState } from "@/src/app/store";
 import HeaderWelcome from "@/src/app/components/Header/HeaderWelcome";
 import { Header } from "@/src/app/components/Header/HeaderDashboard";
 import Footer from "@/src/app/components/Footer/minFooter";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
 export default function WelcomePage() {
   const dispatch = useDispatch<AppDispatch>();
-  const profile = useSelector((state: RootState) => state.profile.data);
-  const cycles = useSelector((state: RootState) => state.cycle.cycles);
-  const activeCycle = useSelector(selectActiveCycle);
-  const applications = useSelector(selectCurrentApplication);
-  const loading = useSelector(
-    (state: RootState) =>
-      state.cycle.loading || state.application.loading || state.profile.loading
-  );
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
+  const profile = useSelector((state: RootState) => state.profile.data);
+  const activeCycle = useSelector(selectActiveCycle);
+  const loading = useSelector((state: RootState) => state.profile.loading);
+  const error = useSelector((state: RootState) => state.profile.error);
+  const cycleLoading = useSelector((state: RootState) => state.cycle.loading);
+
+  // Redirect unauthenticated users
   useEffect(() => {
-    dispatch(fetchProfile());
-    dispatch(fetchCycles());
-    // Get applicationId from localStorage or another source
-    const applicationId =
-      typeof window !== "undefined"
-        ? localStorage.getItem("applicationId")
-        : null;
-    if (applicationId) {
-      dispatch(fetchApplication(applicationId));
+    if (status === "unauthenticated") {
+      router.replace("/auth/login");
     }
-  }, [dispatch]);
+  }, [status, router]);
+
+  // If authenticated but no token, sign out to prevent loop
+  useEffect(() => {
+    if (status === "authenticated" && !session?.accessToken) {
+      signOut({ callbackUrl: "/auth/login" });
+    }
+  }, [status, session, router]);
+
+  // Fetch profile if not loaded and authenticated
+  useEffect(() => {
+    if (
+      status === "authenticated" &&
+      !profile &&
+      !loading &&
+      session?.accessToken
+    ) {
+      dispatch(fetchProfile(session.accessToken));
+    }
+  }, [status, profile, loading, session, dispatch]);
+
+  // Fetch cycles only if authenticated
+  useEffect(() => {
+    if (status === "authenticated" && !cycleLoading && !activeCycle) {
+      dispatch(fetchCycles());
+    }
+  }, [status, dispatch, cycleLoading, activeCycle]);
+
+  if (status === "loading" || loading || cycleLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <span className="text-indigo-600 font-semibold">Loading...</span>
+      </div>
+    );
+  }
+
+  // Show a friendly error and a logout button if token is invalid/expired
+  if (
+    error &&
+    (error.toLowerCase().includes("invalid") ||
+      error.toLowerCase().includes("expired"))
+  ) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-red-500">
+        <div>Error loading profile: {error}</div>
+        <button
+          className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded"
+          onClick={() => signOut({ callbackUrl: "/auth/login" })}
+        >
+          Log out and try again
+        </button>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-red-500">
+        Error loading profile: {error}
+      </div>
+    );
+  }
 
   return (
     <main className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
@@ -56,13 +110,23 @@ export default function WelcomePage() {
                 : "No application cycle is currently active."}
             </p>
             <button
-              className="bg-white text-indigo-700 font-semibold px-4 py-2 rounded shadow hover:bg-indigo-50 transition"
+              className={`font-semibold px-4 py-2 rounded shadow transition ${
+                activeCycle
+                  ? "bg-white text-indigo-700 hover:bg-indigo-50"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
               disabled={!activeCycle}
+              onClick={() => {
+                if (activeCycle) {
+                  router.push("/applicant/applicationForms/step1");
+                }
+              }}
             >
               Start Application
             </button>
           </div>
         </section>
+
         {/* Right: Profile/Checklist/Resources */}
         <aside className="flex-1 flex flex-col gap-4">
           {/* Profile Completion */}
@@ -88,6 +152,7 @@ export default function WelcomePage() {
               Go to profile &rarr;
             </a>
           </div>
+
           {/* Application Checklist */}
           <div className="bg-white rounded-lg shadow p-4">
             <span className="font-semibold text-gray-800 text-sm block mb-2">
@@ -101,6 +166,7 @@ export default function WelcomePage() {
               <li>✓ Upload Resume</li>
             </ul>
           </div>
+
           {/* Helpful Resources */}
           <div className="bg-white rounded-lg shadow p-4">
             <span className="font-semibold text-gray-800 text-sm block mb-2">
@@ -121,11 +187,6 @@ export default function WelcomePage() {
           </div>
         </aside>
       </div>
-      {loading && (
-        <div className="fixed inset-0 bg-white bg-opacity-60 flex items-center justify-center z-50">
-          <span className="text-indigo-600 font-semibold">Loading...</span>
-        </div>
-      )}
       <Footer />
     </main>
   );

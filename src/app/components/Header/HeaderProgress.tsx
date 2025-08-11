@@ -9,7 +9,7 @@ export default function HeaderProgress() {
         Your Application Progress
       </h1>
       <p className="text-gray-500 mt-1 text-sm sm:text-base">
-        You're on your way! Here's a summary of your application status.
+        You are on your way! Here is a summary of your application status.
       </p>
     </header>
   );

@@ -1,38 +1,44 @@
 "use client";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/src/app/store";
 import { setField } from "@/src/app/store/slices/applicantSlice";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Stepper from "@/src/app/components/ApplicationForm/Stepper";
 import Input from "@/src/app/components/ApplicationForm/Input";
 import Button from "@/src/app/components/Button";
 import { Header } from "@/src/app/components/Header/HeaderForm";
-import { fetchProfile } from "@/src/app/store/slices/profileSlice";
-import { fetchApplication } from "@/src/app/store/slices/applicationSlice";
-import React, { useEffect } from "react";
 
 export default function FirstStep() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const { data: session, status } = useSession();
   const formData = useSelector((state: RootState) => state.applicant);
   const profile = useSelector((state: RootState) => state.profile.data);
+  const loading = useSelector((state: RootState) => state.profile.loading);
+  const error = useSelector((state: RootState) => state.profile.error);
 
+  // Redirect unauthenticated users
   useEffect(() => {
-    dispatch(fetchProfile());
-
-    // Get applicationId from localStorage or another source
-    const applicationId =
-      typeof window !== "undefined"
-        ? localStorage.getItem("applicationId")
-        : null;
-    if (applicationId) {
-      dispatch(fetchApplication(applicationId));
+    if (status === "unauthenticated") {
+      router.replace("/auth/login");
     }
-  }, [dispatch]);
+  }, [status, router]);
+
+  // Always provide a default value for controlled inputs
+  const idNumber = formData.idNumber ?? "";
+  const schoolName = formData.schoolName ?? "";
+  const degreeProgram = formData.degreeProgram ?? "";
+
+  if (status === "loading" || loading) return <div>Loading profile...</div>;
+  if (error) return <div>Error loading profile: {error}</div>;
 
   return (
     <main className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
-      <Header username={profile?.full_name || "Applicant"} />
+      <Header
+        username={profile?.full_name || session?.user?.name || "Applicant"}
+      />
       <div className="w-full max-w-2xl mx-auto px-4 py-6 sm:px-6 sm:py-10">
         <Stepper
           steps={["Personal Info", "Coding Profiles", "Essays & Resume"]}
@@ -49,7 +55,7 @@ export default function FirstStep() {
             label="ID Number"
             name="idNumber"
             placeholder="Enter your ID number"
-            value={formData.idNumber}
+            value={idNumber}
             onChange={(e) =>
               dispatch(setField({ field: "idNumber", value: e.target.value }))
             }
@@ -58,7 +64,7 @@ export default function FirstStep() {
             label="School / University"
             name="schoolName"
             placeholder="Enter your university"
-            value={formData.schoolName}
+            value={schoolName}
             onChange={(e) =>
               dispatch(setField({ field: "schoolName", value: e.target.value }))
             }
@@ -67,7 +73,7 @@ export default function FirstStep() {
             label="Degree Program"
             name="degreeProgram"
             placeholder="Enter your degree program"
-            value={formData.degreeProgram}
+            value={degreeProgram}
             onChange={(e) =>
               dispatch(
                 setField({ field: "degreeProgram", value: e.target.value })
