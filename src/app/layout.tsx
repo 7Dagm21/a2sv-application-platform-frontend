@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Providers from "../providers/Providers"; // adjust the import path as necessary
+import { Geist, Geist_Mono } from "next/font/google";
+// import ClientProviders from "./ClientProviders";
+// import { SessionProvider } from "next-auth/react";
+import AppProviders from "./AppProviders";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,12 +14,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "A2SV Application", 
+export const metadata = {
+  title: "A2SV Application",
   description:
     "A fully responsive and mobile-first solution for the A2SV Application Platform MVP",
   icons: {
-    icon: "/a2sv-favicon.png", 
+    icon: "/a2sv-favicon.png",
   },
 };
 
@@ -28,9 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Providers>{children}</Providers>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
