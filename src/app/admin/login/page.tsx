@@ -19,8 +19,6 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
-
-  // Auto-redirect if session exists, remember is "true", and the role is admin.
   useEffect(() => {
     if (status === "loading") return;
     if (
@@ -28,7 +26,7 @@ export default function AdminLoginPage() {
       (session as unknown as { remember: string }).remember === "true" &&
       session.user?.role?.toLowerCase() === "admin"
     ) {
-      router.replace("/admin/dashboard");
+      router.replace("/admin/users");
     }
   }, [session, status, router]);
 
@@ -53,14 +51,14 @@ export default function AdminLoginPage() {
       email,
       password,
       remember: rememberMe ? "true" : "false",
-      callbackUrl: "/admin/dashboard",
+      callbackUrl: "/admin/users",
     });
 
     if (result?.error) {
       toast.error(result.error);
     } else {
       toast.success("Login successful");
-      // Redirection is handled once the session state updates.
+      router.replace("/admin/users");
     }
     setLoading(false);
   };
