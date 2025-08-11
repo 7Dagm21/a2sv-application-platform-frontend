@@ -61,12 +61,8 @@ export const fetchCycleById = createAsyncThunk(
       if (!response.ok)
         throw new Error(data.message || "Failed to fetch cycle");
       return data.data as Cycle;
-    } catch (err: unknown) {
-      let errorMessage = "An unknown error occurred";
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      return rejectWithValue(errorMessage);
+    } catch (err: any) {
+      return rejectWithValue(err.message);
     }
   }
 );
@@ -98,12 +94,8 @@ export const fetchCycles = createAsyncThunk(
         throw new Error(data.message || "Failed to fetch cycles");
       }
       return data.data as CyclesResponse;
-    } catch (err: unknown) {
-      let errorMessage = "An unknown error occurred";
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      return rejectWithValue(errorMessage);
+    } catch (err: any) {
+      return rejectWithValue(err.message);
     }
   }
 );
@@ -134,12 +126,8 @@ export const createNewCycle = createAsyncThunk(
         throw new Error(data.message || "Failed to create cycle");
       }
       return data.data as Cycle;
-    } catch (err: unknown) {
-      let errorMessage = "An unknown error occurred";
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      return rejectWithValue(errorMessage);
+    } catch (err: any) {
+      return rejectWithValue(err.message);
     }
   }
 );
@@ -200,13 +188,6 @@ const cycleSlice = createSlice({
       });
   },
 });
-
-export const cycleActions = {
-  ...cycleSlice.actions,
-  fetchCycles,
-  fetchCycleById,
-  createNewCycle,
-};
 
 export const { resetCycleState, clearCurrentCycle } = cycleSlice.actions;
 export default cycleSlice.reducer;
