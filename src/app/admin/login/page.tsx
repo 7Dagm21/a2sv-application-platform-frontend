@@ -26,7 +26,7 @@ export default function AdminLoginPage() {
       (session as unknown as { remember: string }).remember === "true" &&
       session.user?.role?.toLowerCase() === "admin"
     ) {
-      router.replace("/admin/users");
+        router.replace("/admin/dashboard");
     }
   }, [session, status, router]);
 
@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
       toast.error(result.error);
     } else {
       toast.success("Login successful");
-      router.replace("/admin/users");
+       router.replace("/admin/dashboard");
     }
     setLoading(false);
   };
