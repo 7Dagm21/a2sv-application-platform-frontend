@@ -142,7 +142,9 @@ function ResetPasswordContent() {
               </Button>
             </form>
             {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-            {message && <p className="mt-4 text-sm text-green-600">{message}</p>}
+            {message && (
+              <p className="mt-4 text-sm text-green-600">{message}</p>
+            )}
           </CardContent>
         </Card>
       </main>

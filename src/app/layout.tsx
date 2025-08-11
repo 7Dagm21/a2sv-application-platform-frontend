@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Providers from "../providers/Providers"; // adjust the import path as necessary
+import { Providers } from "../providers/Providers"; // adjust the import path as necessary
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,11 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "A2SV Application", 
+  title: "A2SV Application",
   description:
     "A fully responsive and mobile-first solution for the A2SV Application Platform MVP",
   icons: {
-    icon: "/a2sv-favicon.png", 
+    icon: "/a2sv-favicon.png",
   },
 };
 
@@ -29,7 +29,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

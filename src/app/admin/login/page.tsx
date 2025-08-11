@@ -76,7 +76,12 @@ export default function AdminLoginPage() {
       >
         <div className="container mx-auto flex items-center justify-between">
           <Link href="/">
-            <Image src="/images/a2sv-logo.svg" width={150} height={36} alt="A2SV Logo" />
+            <Image
+              src="/images/a2sv-logo.svg"
+              width={150}
+              height={36}
+              alt="A2SV Logo"
+            />
           </Link>
         </div>
       </motion.header>
@@ -118,7 +123,10 @@ export default function AdminLoginPage() {
                   Remember me
                 </label>
               </div>
-              <Link href="/auth/forgot-password" className="text-indigo-500 hover:underline">
+              <Link
+                href="/auth/forgot-password"
+                className="text-indigo-500 hover:underline"
+              >
                 Forgot password?
               </Link>
             </div>
